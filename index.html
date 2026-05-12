@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue 3 Todo List</title>
+    <!-- 引入 Vue 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+        }
+        
+        .input-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        
+        #newTodo {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        #newTodo:focus {
+            border-color: #667eea;
+        }
+        
+        .add-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        
+        .add-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .todo-list {
+            list-style: none;
+        }
+        
+        .todo-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s;
+        }
+        
+        .todo-item:hover {
+            background-color: #fafafa;
+        }
+        
+        .todo-item:last-child {
+            border-bottom: none;
+        }
+        
+        .checkbox {
+            width: 22px;
+            height: 22px;
+            margin-right: 15px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+        
+        .todo-text {
+            flex: 1;
+            font-size: 1rem;
+            color: #333;
+        }
+        
+        .todo-text.completed {
+            text-decoration: line-through;
+            color: #999;
+        }
+        
+        .delete-btn {
+            padding: 6px 12px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+        
+        .delete-btn:hover {
+            background: #ff6b7a;
+        }
+        
+        .stats {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            text-align: center;
+            color: #666;
+            font-size: 0.95rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+        }
+        
+        .empty-state svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <h1>📝 待办清单</h1>
+        
+        <div class="input-area">
+            <input 
+                type="text" 
+                id="newTodo" 
+                v-model="newTodo" 
+                placeholder="添加新待办..."
+                @keyup.enter="addTodo"
+            >
+            <button class="add-btn" @click="addTodo">添加</button>
+        </div>
+        
+        <ul class="todo-list">
+            <li v-for="(todo, index) in todos" :key="index" class="todo-item">
+                <input 
+                    type="checkbox" 
+                    class="checkbox" 
+                    v-model="todo.completed"
+                >
+                <span :class="['todo-text', { completed: todo.completed }]">
+                    {{ todo.text }}
+                </span>
+                <button class="delete-btn" @click="deleteTodo(index)">删除</button>
+            </li>
+            
+            <li v-if="todos.length === 0" class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                </svg>
+                <p>还没有待办事项</p>
+                <p style="font-size: 0.85rem; margin-top: 5px;">添加一个新任务开始吧！</p>
+            </li>
+        </ul>
+        
+        <div class="stats" v-if="todos.length > 0">
+            <span>共 {{ todos.length }} 项，已完成 {{ completedCount }} 项</span>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue
+        
+        createApp({
+            data() {
+                return {
+                    newTodo: '',
+                    todos: [
+                        { text: '学习 Vue 3', completed: false },
+                        { text: '完成作业', completed: true },
+                        { text: '跑步锻炼', completed: false }
+                    ]
+                }
+            },
+            
+            computed: {
+                completedCount() {
+                    return this.todos.filter(todo => todo.completed).length
+                }
+            },
+            
+            methods: {
+                addTodo() {
+                    const text = this.newTodo.trim()
+                    
+                    this.todos.push({
+                        text: text,
+                        completed: false
+                    })
+                    
+                    this.newTodo = ''
+                },
+                
+                deleteTodo(index) {
+                    this.todos.splice(index + 1, 1)
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
